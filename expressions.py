@@ -37,6 +37,7 @@ class Expressions(object):
             expression = 'v'.join(disjuncts) if disjuncts else self.FIRST_VAR+'&~'+self.FIRST_VAR
             exp[superval] = expression
 
+        # filter opposites
         expset = set()
         been = set()
         for superval, e in exp.iteritems():
@@ -47,7 +48,9 @@ class Expressions(object):
             expset.add(chosen)
             been.add(e)
             been.add(exp[opp])
+
         self.expressions = list(expset)
+
     def _get_known(self):
         combs = self._get_var_combinations()
         exp = []
@@ -55,13 +58,20 @@ class Expressions(object):
             exp.append('&'.join(comb))
             exp.append('v'.join(comb))
             exp.append('='.join(comb))
+            exp.append('>'.join(comb))
             if len(comb) > 2:
                 exp.append('='.join(['&'.join(comb[:2])]+list(comb[2:])))
                 exp.append('='.join(['v'.join(comb[:2])]+list(comb[2:])))
+                exp.append('='.join(['>'.join(comb[:2])]+list(comb[2:])))
                 exp.append('&'.join(['v'.join(comb[:2])]+list(comb[2:])))
                 exp.append('&'.join(['='.join(comb[:2])]+list(comb[2:])))
+                exp.append('&'.join(['>'.join(comb[:2])]+list(comb[2:])))
                 exp.append('v'.join(['&'.join(comb[:2])]+list(comb[2:])))
                 exp.append('v'.join(['='.join(comb[:2])]+list(comb[2:])))
+                exp.append('v'.join(['>'.join(comb[:2])]+list(comb[2:])))
+                exp.append('>'.join(['&'.join(comb[:2])]+list(comb[2:])))
+                exp.append('>'.join(['='.join(comb[:2])]+list(comb[2:])))
+                exp.append('>'.join(['v'.join(comb[:2])]+list(comb[2:])))
 #        more = set()
 #        for e in exp:
 #            if len(e) == 1:
@@ -113,7 +123,7 @@ def _truth_values(size):
     return product(*(((True, False),) * size))
 
 def evaluate(f, assignment):
-    """ only works with dnf """
+    """ only works with dnf and some other basic forms """
     if 'v' in f:
         fs = f.split('v')
         return any(evaluate(f, assignment) for f in fs) 
@@ -124,6 +134,9 @@ def evaluate(f, assignment):
         fs = f.replace('(','').replace(')','').split('=')
         evs = [evaluate(f, assignment) for f in fs]
         return all(evs) or not any(evs)
+    if '>' in f:
+        prefix, last = f.replace('(','').replace(')','').rsplit('>', 1)
+        return not evaluate(prefix, assignment) or evaluate(last, assignment)
     if f.startswith('~'):
         return not assignment[f[1]]
     return assignment[f]
