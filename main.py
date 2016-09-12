@@ -59,7 +59,6 @@ def main():
 
     print 'mapping'
     mapping, equivs = make_relations(all_exps, e, relation=exp.closer_to_than)
-    print 'equivs', equivs
 
     print 'filtering'
     for f, f_list in mapping.iteritems():
